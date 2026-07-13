@@ -27,7 +27,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("Furancio EAF - Consola Analítica")
+st.title("Furancio EAF hola jeje equisde - Consola Analítica")
 
 try:
     client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
