@@ -227,7 +227,6 @@ with col2:
 with col3:
     st.subheader("Asesor IA (Gemini)")
     
-    # Usamos el contenedor nativo de Streamlit con altura fija para encapsular todo con scroll aislado real
     with st.container(height=720):
         
         prompt_maestro = f"""
@@ -256,7 +255,7 @@ No me des descripciones obvias. Proporciona un diagnóstico operativo conciso, a
             with st.spinner("Analizando operación de acería..."):
                 try:
                     response = client.models.generate_content(
-                        model='gemini-3-flash-preview',
+                        model='gemini-2.5-flash',
                         contents=prompt_maestro,
                     )
                     st.session_state["diagnostico"] = response.text
@@ -272,9 +271,9 @@ No me des descripciones obvias. Proporciona un diagnóstico operativo conciso, a
             if user_request:
                 with st.spinner("Procesando consulta técnica..."):
                     try:
-                        chat_prompt = f"{prompt_maestro}\n\n[CONSULTA ESPECÍFICA DEL OPERADOR/INGENIERO]\n{user_request}\n\nResponde con rigor técnico, enfoque operativo de piso y brevedad."
+                        chat_prompt = f"{prompt_maestro}\n\n[CONSULTA ESPECÍFica DEL OPERADOR/INGENIERO]\n{user_request}\n\nResponde con rigor técnico, enfoque operativo de piso y brevedad."
                         chat_res = client.models.generate_content(
-                            model='gemini-3-flash-preview',
+                            model='gemini-2.5-flash',
                             contents=chat_prompt
                         )
                         st.session_state["chat_respuesta"] = chat_res.text
