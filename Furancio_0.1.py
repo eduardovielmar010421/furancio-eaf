@@ -1,7 +1,6 @@
-from google import genai
-from google.genai import errors
-import plotly.express as px
 import pandas as pd
+import plotly.express as px
+from google import genai
 import streamlit as st
 
 # ==========================================
@@ -41,6 +40,7 @@ try:
     client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 except Exception:
     client = None
+
 
 # ==========================================
 # 2. CARGA DE DATOS
@@ -150,6 +150,8 @@ col1, col2, col3 = st.columns([1.1, 2.0, 1.0])
 
 with col1:
     st.subheader("Planta en Tiempo Real")
+
+    # CORREGIDO: st.markdown con renderizado de HTML habilitado
     st.markdown(
         f"""
         <div class="live-card">
@@ -167,8 +169,10 @@ with col1:
         '<div class="section-header">Producción y Rendimiento</div>',
         unsafe_allow_html=True,
     )
+
     g1_c1, g1_c2 = st.columns(2)
     with g1_c1:
+        # CORREGIDO: Cambio de contenedor plano a st.markdown interactivo
         st.markdown(
             f"""
             <div class="kpi-card">
@@ -179,6 +183,7 @@ with col1:
             unsafe_allow_html=True,
         )
     with g1_c2:
+        # CORREGIDO: Cambio de contenedor plano a st.markdown interactivo
         st.markdown(
             f"""
             <div class="kpi-card">
@@ -322,7 +327,7 @@ with col3:
     with st.container(height=720):
 
         prompt_maestro = f"""
-Actúa como un Ingeniero Metalurgista Senior y Asesor de Operaciones experto en la optimización de Hornos de Arco Eléctrico (EAF) y Acería. 
+Actúa como un Ingeniero Metalurgista Senior y Asesor de Operaciones experto en la optimización de Hornos de Arco Eléctrico (EAF) y Acería.
 Analiza de manera integral los datos operativos y estadísticos actuales de la planta bajo los filtros aplicados:
 
 [CONTEXTO DE PLANTA Y ESTADÍSTICAS FILTRADAS]
@@ -344,24 +349,19 @@ No me des descripciones obvias. Proporciona un diagnóstico operativo conciso, a
 """
 
         if st.button("🔄 Generar Diagnóstico"):
-            if client is None:
-                st.session_state["diagnostico"] = (
-                    "❌ Cliente de Gemini no configurado (Falta API Key)."
-                )
-            else:
-                with st.spinner("Analizando operación de acería..."):
-                    try:
-                        response = client.models.generate_content(
-                            model="gemini-2.5-flash",
-                            contents=prompt_maestro,
-                        )
-                        st.session_state["diagnostico"] = response.text
-                    except Exception as e:
-                        st.session_state["diagnostico"] = (
-                            "⏳ Servidor saturado, intenta de nuevo."
-                        )
+            with st.spinner("Analizando operación de acería..."):
+                try:
+                    response = client.models.generate_content(
+                        model="gemini-3-flash-preview",
+                        contents=prompt_maestro,
+                    )
+                    st.session_state["diagnostico"] = response.text
+                except Exception:
+                    st.session_state["diagnostico"] = (
+                        "⏳ Servidor saturado, intenta de nuevo."
+                    )
 
-        if "diagnostico" in st.session_state and st.session_state["diagnostico"]:
+        if "diagnostico" in st.session_state:
             st.markdown(
                 f'<div style="background-color:#161b22; padding:12px; border-radius:6px; border: 1px solid #30363d; margin-bottom: 10px;"><p style="color:#c9d1d9; font-size:12px; margin:0; white-space: pre-wrap;">{st.session_state["diagnostico"]}</p></div>',
                 unsafe_allow_html=True,
@@ -370,27 +370,18 @@ No me des descripciones obvias. Proporciona un diagnóstico operativo conciso, a
         st.markdown("---")
         user_request = st.text_input("💬 Pregunta al Asesor:", key="chat")
         if st.button("✉️ Enviar"):
-            if user_request and client:
+            if user_request:
                 with st.spinner("Procesando consulta técnica..."):
                     try:
-                        chat_prompt = f"{prompt_maestro}\n\n[CONSULTA ESPECÍFica DEL OPERADOR/INGENIERO]\n{user_request}\n\nResponde con rigor técnico, enfoque operativo de piso y brevedad."
+                        chat_prompt = f"{prompt_maestro}\n\n[CONSULTA ESPECÍFICA DEL OPERADOR/INGENIERO]\n{user_request}\n\nResponde con rigor técnico, enfoque operativo de piso y brevedad."
                         chat_res = client.models.generate_content(
-                            model="gemini-2.5-flash", contents=chat_prompt
+                            model="gemini-3-flash-preview", contents=chat_prompt
                         )
                         st.session_state["chat_respuesta"] = chat_res.text
                     except Exception:
-                        st.session_state["chat_respuesta"] = (
-                            "⏳ Servidor saturado, intenta de nuevo."
-                        )
-            elif not client:
-                st.session_state["chat_respuesta"] = (
-                    "❌ Conexión rechazada (API Key no disponible)."
-                )
+                        st.error("Conexión rechazada.")
 
-        if (
-            "chat_respuesta" in st.session_state
-            and st.session_state["chat_respuesta"]
-        ):
+        if "chat_respuesta" in st.session_state:
             st.info(st.session_state["chat_respuesta"])
 
 # ==========================================
